@@ -1,0 +1,460 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="shortcut icon" href="favicon.ico">
+  <title>留言展示</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: url('background.webp') no-repeat center center fixed;
+      background-size: cover;
+      color: #ffffff;
+    }
+
+    @media screen and (orientation: portrait) {
+      body {
+        background: url('background1.webp') no-repeat center center fixed;
+        background-size: cover;
+      }
+    }
+
+    .container {
+      margin: 0 auto;
+      padding: 40px 20px;
+      background-color: rgba(0, 0, 0, 0.50);
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 30px;
+    }
+
+    .message {
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+    }
+
+    .message:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .message .author {
+      font-weight: bold;
+      color:#000000;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+    }
+
+    .author-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 10px;
+      background-color: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .message .time {
+      font-size: 0.9em;
+      color: #777;
+      margin-bottom: 8px;
+    }
+
+    .message .content {
+      font-size: 1.05em;
+      color:#000000;
+      line-height: 1.5;
+    }
+
+    .input-box {
+      margin-top: 30px;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .input-box h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #fff;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #fff;
+    }
+
+    .input-box input, .input-box textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
+    .input-box textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .input-box button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: black;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+
+    .input-box button:hover {
+      background-color: #333;
+    }
+
+    .input-box button:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+
+    .message-count {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ddd;
+    }
+
+    .empty-message {
+      text-align: center;
+      color: #aaa;
+      padding: 40px 20px;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+    }
+
+    .menu-button {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background-color: white;
+      color: black;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: transform 0.3s;
+    }
+
+    .menu-button:hover {
+      transform: scale(1.05);
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -250px;
+      width: 250px;
+      height: 100%;
+      background-color: white;
+      color: black;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+      box-sizing: border-box;
+      transition: left 0.3s ease;
+      z-index: 1002;
+      display: flex;
+      padding-top: 60px;
+      flex-direction: column;
+    }
+
+    .sidebar a {
+      padding: 10px 20px;
+      text-decoration: none;
+      color: black;
+      font-size: 20px;
+      transition: background-color 0.2s;
+    }
+
+    .sidebar a:hover {
+      background-color: #f5f5f5;
+    }
+
+    #sidebar .closebtn {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 30px;
+      cursor: pointer;
+      color: black;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.3);
+      display: none;
+      z-index: 1000;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 6px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1003;
+      transform: translateX(150%);
+      transition: transform 0.3s ease;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .notification.error {
+      background-color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>留言墙</h1>
+    <div class="message-count" id="messageCount">共 2 条留言</div>
+
+    <!-- 留言区域 -->
+    <div id="messagesContainer">
+      <!-- 示例留言 -->
+      <div class="message">
+        <div class="author">
+          <div class="author-avatar">小</div>
+          小明
+        </div>
+        <div class="time">2025-05-14 14:23</div>
+        <div class="content">祝大家前程似锦，一路顺风！</div>
+      </div>
+
+      <div class="message">
+        <div class="author">
+          <div class="author-avatar">阿</div>
+          阿豪
+        </div>
+        <div class="time">2025-05-14 13:02</div>
+        <div class="content">13班的回忆我永远不会忘！</div>
+      </div>
+    </div>
+
+    <!-- 留言输入区域 -->
+    <div class="input-box">
+      <h3>留下你的留言</h3>
+      <div class="input-group">
+        <label for="authorName">你的名字</label>
+        <input type="text" id="authorName" placeholder="请输入你的名字" maxlength="20">
+      </div>
+      <div class="input-group">
+        <label for="messageContent">留言内容</label>
+        <textarea id="messageContent" rows="4" placeholder="写下你想说的话..." maxlength="200"></textarea>
+      </div>
+      <button id="submitMessage">提交留言</button>
+    </div>
+
+    <!-- 菜单按钮 -->
+    <div class="menu-button" onclick="toggleSidebar()">☰ 菜单</div>
+
+    <!-- 侧边栏 -->
+    <div id="sidebar" class="sidebar">
+      <span class="closebtn" onclick="toggleSidebar()">×</span>
+      <a href="index.html" target="_blank">H.K.M.计时器</a>
+      <a href="ni.html" target="_blank">高考倒计时</a>
+      <a href="https://www.bilibili.com" target="_blank">Bilibili</a>
+      <a href="https://github.com/PrismOS151135/HongKong" target="_blank">仓库</a>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- 通知 -->
+    <div class="notification" id="notification">留言提交成功！</div>
+  </div>
+
+  <script>
+    // 侧边栏功能
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      const isOpen = sidebar.style.left === '0px';
+      sidebar.style.left = isOpen ? '-250px' : '0px';
+      overlay.style.display = isOpen ? 'none' : 'block';
+    }
+
+    // 留言功能
+    document.addEventListener('DOMContentLoaded', function() {
+      const authorInput = document.getElementById('authorName');
+      const messageInput = document.getElementById('messageContent');
+      const submitButton = document.getElementById('submitMessage');
+      const messagesContainer = document.getElementById('messagesContainer');
+      const messageCount = document.getElementById('messageCount');
+      const notification = document.getElementById('notification');
+      
+      // 从本地存储加载留言
+      loadMessages();
+      
+      // 提交留言
+      submitButton.addEventListener('click', function() {
+        const author = authorInput.value.trim();
+        const content = messageInput.value.trim();
+        
+        if (!author) {
+          showNotification('请输入你的名字', true);
+          return;
+        }
+        
+        if (!content) {
+          showNotification('请输入留言内容', true);
+          return;
+        }
+        
+        // 创建新留言
+        addMessage(author, content);
+        
+        // 清空输入框
+        authorInput.value = '';
+        messageInput.value = '';
+        
+        // 显示成功通知
+        showNotification('留言提交成功！');
+      });
+      
+      // 添加留言
+      function addMessage(author, content) {
+        const now = new Date();
+        const timeString = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message';
+        messageElement.innerHTML = `
+          <div class="author">
+            <div class="author-avatar">${author.charAt(0)}</div>
+            ${author}
+          </div>
+          <div class="time">${timeString}</div>
+          <div class="content">${content}</div>
+        `;
+        
+        // 将新留言添加到顶部
+        messagesContainer.insertBefore(messageElement, messagesContainer.firstChild);
+        
+        // 更新留言计数
+        updateMessageCount();
+        
+        // 保存到本地存储
+        saveMessages();
+      }
+      
+      // 更新留言计数
+      function updateMessageCount() {
+        const count = messagesContainer.children.length;
+        messageCount.textContent = `共 ${count} 条留言`;
+      }
+      
+      // 保存留言到本地存储
+      function saveMessages() {
+        const messages = [];
+        const messageElements = messagesContainer.children;
+        
+        for (let i = 0; i < messageElements.length; i++) {
+          const message = messageElements[i];
+          const author = message.querySelector('.author').textContent.replace(/^[^\u4e00-\u9fa5a-zA-Z0-9]+/, '');
+          const time = message.querySelector('.time').textContent;
+          const content = message.querySelector('.content').textContent;
+          
+          messages.push({
+            author: author,
+            time: time,
+            content: content
+          });
+        }
+        
+        localStorage.setItem('messages', JSON.stringify(messages));
+      }
+      
+      // 从本地存储加载留言
+      function loadMessages() {
+        const savedMessages = localStorage。getItem('messages');
+        
+        if (savedMessages) {
+          const messages = JSON.parse(savedMessages);
+          messagesContainer。innerHTML = '';
+          
+          messages。forEach(msg => {
+            const messageElement = document。createElement('div');
+            messageElement.className = 'message';
+            messageElement.innerHTML = `
+              <div class="author">
+                <div class="author-avatar">${msg。author。charAt(0)}</div>
+                ${msg。author}
+              </div>
+              <div class="time">${msg。time}</div>
+              <div class="content">${msg.content}</div>
+            `;
+            
+            messagesContainer。appendChild(messageElement);
+          });
+        }
+        
+        updateMessageCount();
+      }
+      
+      // 显示通知
+      function showNotification(text， isError = false) {
+        notification。textContent = text;
+        notification。className = 'notification' + (isError ? ' error' : '');
+        notification.classList.add('show');
+        
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 3000);
+      }
+      
+      // 初始更新留言计数
+      updateMessageCount();
+    });
+  </script>
+</body>
+</html>
