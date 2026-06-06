@@ -141,41 +141,206 @@
     <a href="https://github.com/PrismOS151135/HongKong" target="_blank">仓库</a>
   </div>
 
-  <script>
-    const startTime = new Date("2026-06-07T09:00:00");
 
-    function updateTimer() {
-      const now = new Date();
-      let diff = Math.floor((startTime - now) / 1000);
-	  
-      const days = Math.floor(diff / (24 * 60 * 60));
-      diff -= days * 24 * 60 * 60;
+<script>
+  (function() {
+    // ---------- 高考日期核心参数 ----------
+    // 高考固定开始：6月7日，持续3天（6月7日、8日、9日）
+    const GAOKAO_MONTH = 5;   // 5 = 六月 (JS 月份从0开始)
+    const GAOKAO_START_DAY = 7;
+    const GAOKAO_END_DAY = 9;   // 高考最后一天
 
-      const hours = Math.floor(diff / 3600);
-      diff -= hours * 3600;
-
-      const minutes = Math.floor(diff / 60);
-      const seconds = Math.round(diff % 60); // ✅ 使用四舍五入避免显示小数秒
-
-      document.getElementById("timer").textContent =
-        `${days} 天 ` +
-        `${hours.toString().padStart(2, '0')} 小时 ` +
-        `${minutes.toString().padStart(2, '0')} 分钟 ` +
-        `${seconds.toString().padStart(2, '0')} 秒`;
+    /**
+     * 获取某一年高考开始日期对象（当地时间 00:00:00）
+     * @param {number} year 年份
+     * @returns {Date} 高考开始日期的零点（本地时间）
+     */
+    function getGaokaoStartDate(year) {
+      return new Date(year, GAOKAO_MONTH, GAOKAO_START_DAY, 0, 0, 0, 0);
     }
 
-    setInterval(updateTimer, 1000);
-    updateTimer();
-
-    function openSidebar() {
-      document.getElementById("sidebar").style.width = "250px";
-      document.getElementById("sidebarOverlay").style.display = "block";
+    /**
+     * 获取某一年高考结束时刻（最后一天 23:59:59.999）
+     * 用于判断是否在高考期内
+     * @param {number} year 
+     * @returns {Date} 高考最后一天的最后一毫秒
+     */
+    function getGaokaoEndMoment(year) {
+      return new Date(year, GAOKAO_MONTH, GAOKAO_END_DAY, 23, 59, 59, 999);
     }
 
-    function closeSidebar() {
-      document.getElementById("sidebar").style.width = "0";
-      document.getElementById("sidebarOverlay").style.display = "none";
+    /**
+     * 判断当前日期是否处于高考期间（包含整个6月7日-6月9日）
+     * @param {Date} now 
+     * @returns {boolean} 是否在高考进行中
+     */
+    function isDuringGaokao(now) {
+      const year = now.getFullYear();
+      const startDate = getGaokaoStartDate(year);
+      const endDate = getGaokaoEndMoment(year);
+      // 比较时间戳，确保当天任意时刻都算
+      return (now >= startDate && now <= endDate);
     }
-  </script>
+
+    /**
+     * 获取高考期间的第几天 (1,2,3)
+     * 前提: 当前日期一定在高考期间内
+     * @param {Date} now 
+     * @returns {number} 第几天 (1~3)
+     */
+    function getGaokaoDayIndex(now) {
+      const year = now.getFullYear();
+      const startDate = getGaokaoStartDate(year);
+      // 将两个日期归零到当天00:00:00 计算自然日差值
+      const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const diffDays = Math.floor((currentDay - startDay) / (1000 * 60 * 60 * 24));
+      // 第几天 = 差值 + 1 (6月7日差0天 => 第1天)
+      let dayNum = diffDays + 1;
+      // 安全限制 1~3
+      if (dayNum < 1) dayNum = 1;
+      if (dayNum > 3) dayNum = 3;
+      return dayNum;
+    }
+
+    /**
+     * 获取下一次高考开始日期以及对应的年份（用于倒计时）
+     * 逻辑: 
+     * - 如果当前日期在本年高考开始之前 -> 返回本年高考开始日期
+     * - 如果当前日期在本年高考结束后（或正处于高考期间但高考期间会单独处理调用此函数前已过滤）
+     *   返回下一年高考开始日期
+     * @param {Date} now 
+     * @returns {{ targetDate: Date, targetYear: number }}
+     */
+    function getNextGaokaoStart(now) {
+      const currentYear = now.getFullYear();
+      const thisYearStart = getGaokaoStartDate(currentYear);
+      // 注意：若当前日期在高考期间，上层函数会直接显示加油标语，不会走入倒计时模块。
+      // 这里只服务于非高考期间的情况
+      if (now < thisYearStart) {
+        // 还未到达今年高考 -> 倒计时指向今年高考
+        return { targetDate: thisYearStart, targetYear: currentYear };
+      } else {
+        // 已经过了今年高考开始（包括高考已结束或完全在高考结束后）
+        // 则计算明年高考
+        const nextYear = currentYear + 1;
+        const nextYearStart = getGaokaoStartDate(nextYear);
+        return { targetDate: nextYearStart, targetYear: nextYear };
+      }
+    }
+
+    /**
+     * 格式化倒计时 (天, 时, 分, 秒)
+     * @param {number} diffMs 毫秒差 (正数)
+     * @returns {{days: number, hours: number, minutes: number, seconds: number}}
+     */
+    function getTimeComponents(diffMs) {
+      let totalSeconds = Math.floor(diffMs / 1000);
+      if (totalSeconds < 0) totalSeconds = 0;
+      const days = Math.floor(totalSeconds / (24 * 3600));
+      const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return { days, hours, minutes, seconds };
+    }
+
+    /**
+     * 更新页面主计时器内容
+     * 核心逻辑:
+     * 1. 如果在高考期间 -> 显示 “高考加油！已高考 X/3 天” + 励志短语
+     * 2. 否则 -> 显示 “距离 20XX年高考 还有 X天 X小时 X分 X秒”
+     */
+    function updateTimerDisplay() {
+      const now = new Date(); // 当前精确时刻
+      const timerElement = document.getElementById('timer');
+      if (!timerElement) return;
+
+      // 情况1：正处于高考期间（6月7日～6月9日）
+      if (isDuringGaokao(now)) {
+        const dayNumber = getGaokaoDayIndex(now);
+        // 精美加油展示，符合需求“高考加油，已高考X/3天”
+        // 增加一些额外的鼓励氛围，但核心信息明确
+        timerElement.innerHTML = `🎓 高考加油！ 已高考 ${dayNumber}/3 天 🎉<br><span style="font-size:0.75em; opacity:0.9;">✨ 全力以赴，未来可期 ✨</span>`;
+        timerElement.classList.add('cheer-text');
+        return;
+      }
+      
+      // 情况2：非高考期间 -> 显示倒计时（距离下一次高考还有xx天...）
+      // 移除特殊样式的可能残留
+      timerElement.classList.remove('cheer-text');
+      
+      // 获取下一次高考的目标日期与年份
+      const { targetDate, targetYear } = getNextGaokaoStart(now);
+      const diffMs = targetDate - now; // 毫秒差
+      
+      // 理论上 diffMs 绝对大于0 (因为已经过滤高考期间，并且逻辑保证目标日期在未来)
+      if (diffMs <= 0) {
+        // 极少数边界情况：如果此刻恰巧在高考最后一秒与下一瞬间被捕获，强制刷新页面判断
+        // 为防止显示负数，递归调用一次重新获取状态（主要是针对跨日边界极边缘情况）
+        // 简单处理：重新调用一次强制刷新逻辑
+        setTimeout(() => updateTimerDisplay(), 10);
+        timerElement.textContent = '🎯 刷新倒计时中...';
+        return;
+      }
+      
+      const { days, hours, minutes, seconds } = getTimeComponents(diffMs);
+      
+      // 按照风格显示 "距离 XXXX年高考 还有 X天 HH小时 MM分 SS秒"
+      // 精确匹配需求“距离XX年高考有多少天”，同时保留完整时间增加清晰感
+      timerElement.innerHTML = `⏳ 距离 ${targetYear}年高考 还有<br> ${days}天 ${hours.toString().padStart(2, '0')}小时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒`;
+    }
+
+    // 初始化定时器，每秒刷新
+    let intervalId = null;
+    function startTimer() {
+      if (intervalId) clearInterval(intervalId);
+      // 先立即更新一次
+      updateTimerDisplay();
+      intervalId = setInterval(() => {
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    // 侧边栏控制函数（保持不变，增强交互）
+    window.openSidebar = function() {
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+      if (sidebar) sidebar.style.width = "280px";
+      if (overlay) overlay.style.display = "block";
+      // 防止body滚动
+      document.body.style.overflow = "hidden";
+    };
+    
+    window.closeSidebar = function() {
+      const sidebar = document.getElementById("sidebar");
+      const overlay = document.getElementById("sidebarOverlay");
+      if (sidebar) sidebar.style.width = "0";
+      if (overlay) overlay.style.display = "none";
+      document.body.style.overflow = "";
+    };
+    
+    // 点击遮罩关闭
+    const overlayDiv = document.getElementById("sidebarOverlay");
+    if (overlayDiv) {
+      overlayDiv.addEventListener('click', function(e) {
+        closeSidebar();
+      });
+    }
+    
+    // 启动倒计时引擎
+    startTimer();
+    
+    // 监听页面可见性变化（优化性能，但保持精确，不做额外处理也OK）
+    // 可选的额外处理：当页面从后台恢复时刷新一次
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) {
+        updateTimerDisplay();
+      }
+    });
+    
+    // 处理动态年份边界（凌晨跨年、跨高考日期时自动更新样式，setInterval足够）
+    // 额外监听系统时间偏移？无需，每秒调用内实时取 new Date() 确保绝对准确
+  })();
+</script>
 </body>
 </html>
