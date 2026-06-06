@@ -126,7 +126,7 @@
 </head>
 <body>
   <div class="overlay">
-    <h1>高考倒计时</h1>
+    <h1 id="year">高考倒计时</h1>
     <div id="timer">加载中...</div>
   </div>
 
@@ -156,7 +156,7 @@
      * @returns {Date} 高考开始日期的零点（本地时间）
      */
     function getGaokaoStartDate(year) {
-      return new Date(year, GAOKAO_MONTH, GAOKAO_START_DAY, 0, 0, 0, 0);
+      return new Date(year, GAOKAO_MONTH, GAOKAO_START_DAY, 9, 0, 0, 0);
     }
 
     /**
@@ -248,16 +248,18 @@
      * 更新页面主计时器内容
      * 核心逻辑:
      * 1. 如果在高考期间 -> 显示 “高考加油！已高考 X/3 天” + 励志短语
-     * 2. 否则 -> 显示 “距离 20XX年高考 还有 X天 X小时 X分 X秒”
+     * 2. 否则 -> 显示 “距离高考 还有 X天 X小时 X分 X秒”
      */
     function updateTimerDisplay() {
       const now = new Date(); // 当前精确时刻
       const timerElement = document.getElementById('timer');
-      if (!timerElement) return;
+	  const yearElement = document.getElementById('year');
+      if (!timerElement || !yearElement) return;
 
       // 情况1：正处于高考期间（6月7日～6月9日）
       if (isDuringGaokao(now)) {
         const dayNumber = getGaokaoDayIndex(now);
+	    yearElement.innerHTML = `今年年高考进行时~`
         // 精美加油展示，符合需求“高考加油，已高考X/3天”
         // 增加一些额外的鼓励氛围，但核心信息明确
         timerElement.innerHTML = `🎓 高考加油！ 已高考 ${dayNumber}/3 天 🎉<br><span style="font-size:0.75em; opacity:0.9;">✨ 全力以赴，未来可期 ✨</span>`;
@@ -272,6 +274,8 @@
       // 获取下一次高考的目标日期与年份
       const { targetDate, targetYear } = getNextGaokaoStart(now);
       const diffMs = targetDate - now; // 毫秒差
+
+	  yearElement.innerHTML = `${targetYear}年高考倒计时`
       
       // 理论上 diffMs 绝对大于0 (因为已经过滤高考期间，并且逻辑保证目标日期在未来)
       if (diffMs <= 0) {
@@ -285,9 +289,8 @@
       
       const { days, hours, minutes, seconds } = getTimeComponents(diffMs);
       
-      // 按照风格显示 "距离 XXXX年高考 还有 X天 HH小时 MM分 SS秒"
-      // 精确匹配需求“距离XX年高考有多少天”，同时保留完整时间增加清晰感
-      timerElement.innerHTML = `距离${targetYear}年高考 还有<br> ${days}天 ${hours.toString().padStart(2, '0')}小时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒`;
+      // 按照风格显示 "距离高考还有 X天 HH小时 MM分 SS秒"
+      timerElement.innerHTML = `距离高考还有<br> ${days}天 ${hours.toString().padStart(2, '0')}小时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒`;
     }
 
     // 初始化定时器，每秒刷新
