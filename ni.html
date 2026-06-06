@@ -210,7 +210,7 @@
      * - 如果当前日期在本年高考结束后（或正处于高考期间但高考期间会单独处理调用此函数前已过滤）
      *   返回下一年高考开始日期
      * @param {Date} now 
-     * @returns {{ targetDate: Date, targetYear: number }}
+     * @returns {{ targetDate: Date, targetYear: number, currentNow:currentYear  }}
      */
     function getNextGaokaoStart(now) {
       const currentYear = now.getFullYear();
@@ -225,7 +225,7 @@
         // 则计算明年高考
         const nextYear = currentYear + 1;
         const nextYearStart = getGaokaoStartDate(nextYear);
-        return { targetDate: nextYearStart, targetYear: nextYear };
+        return { targetDate: nextYearStart, targetYear: nextYear, currentNow:currentYear };
       }
     }
 
@@ -259,7 +259,8 @@
       // 情况1：正处于高考期间（6月7日～6月9日）
       if (isDuringGaokao(now)) {
         const dayNumber = getGaokaoDayIndex(now);
-	    yearElement.innerHTML = `今年年高考进行时~`
+        const { currentNow } = getNextGaokaoStart(now);
+        yearElement.innerHTML = `${currentNow }年高考进行时~<br>(= · ω · =)`
         // 精美加油展示，符合需求“高考加油，已高考X/3天”
         // 增加一些额外的鼓励氛围，但核心信息明确
         timerElement.innerHTML = `🎓 高考加油！ 已高考 ${dayNumber}/3 天 🎉<br><span style="font-size:0.75em; opacity:0.9;">✨ 全力以赴，未来可期 ✨</span>`;
@@ -275,7 +276,7 @@
       const { targetDate, targetYear } = getNextGaokaoStart(now);
       const diffMs = targetDate - now; // 毫秒差
 
-	  yearElement.innerHTML = `${targetYear}年高考倒计时`
+	  yearElement.innerHTML = `${targetYear}年高考倒计时<br>(= · ω · =)`
       
       // 理论上 diffMs 绝对大于0 (因为已经过滤高考期间，并且逻辑保证目标日期在未来)
       if (diffMs <= 0) {
@@ -290,7 +291,7 @@
       const { days, hours, minutes, seconds } = getTimeComponents(diffMs);
       
       // 按照风格显示 "距离高考还有 X天 HH小时 MM分 SS秒"
-      timerElement.innerHTML = `距离高考还有<br> ${days}天 ${hours.toString().padStart(2, '0')}小时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒`;
+      timerElement.innerHTML = `距离高考还有<br> ${days}天 ${hours.toString().padStart(2, '0')}小时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒<br>✨ 乾坤未定，你我皆是黑马 ✨`;
     }
 
     // 初始化定时器，每秒刷新
