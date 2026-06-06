@@ -279,7 +279,7 @@
         // 为防止显示负数，递归调用一次重新获取状态（主要是针对跨日边界极边缘情况）
         // 简单处理：重新调用一次强制刷新逻辑
         setTimeout(() => updateTimerDisplay(), 10);
-        timerElement.textContent = '🎯 刷新倒计时中...';
+        timerElement.textContent = '刷新倒计时中...';
         return;
       }
       
@@ -287,7 +287,7 @@
       
       // 按照风格显示 "距离 XXXX年高考 还有 X天 HH小时 MM分 SS秒"
       // 精确匹配需求“距离XX年高考有多少天”，同时保留完整时间增加清晰感
-      timerElement.innerHTML = `⏳ 距离 ${targetYear}年高考 还有<br> ${days}天 ${hours.toString().padStart(2, '0')}小时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒`;
+      timerElement.innerHTML = `距离${targetYear}年高考 还有<br> ${days}天 ${hours.toString().padStart(2, '0')}小时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒`;
     }
 
     // 初始化定时器，每秒刷新
