@@ -292,7 +292,7 @@
       const { days, hours, minutes, seconds } = getTimeComponents(diffMs);
       
       // 按照风格显示 "距离高考还有 X天 HH小时 MM分 SS秒"
-      timerElement.innerHTML = `距离高考还有<br> ${days}天 ${hours.toString().padStart(2, '0')}小时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒<br>✨ 乾坤未定，你我皆是黑马 ✨`;
+      timerElement.innerHTML = `距离高考还有<br> ${days}天 ${hours.toString().padStart(2, '0')}小时 ${minutes.toString().padStart(2, '0')}分 ${seconds.toString().padStart(2, '0')}秒<br><span style="font-size:0.75em; opacity:0.9;">✨ 乾坤未定，你我皆是黑马 ✨</span>`;
     }
 
     // 初始化定时器，每秒刷新
